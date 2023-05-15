@@ -41,7 +41,7 @@ linreg = LinearRegression()
 
 preprocessing = Pipeline(
     steps=[
-        ("variance", VarianceThreshold(0.01)),
+        ("variance", VarianceThreshold(0.0)),
         ("lif", LowInfoFilter()),
         ("impute", SimpleImputer(strategy="median")),
         ("std", StandardScaler())
