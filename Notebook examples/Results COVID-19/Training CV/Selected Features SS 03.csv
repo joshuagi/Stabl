@@ -1,0 +1,101 @@
+,Fold selected features,Fold nb of features
+Fold 0,['CCL20'],1
+Fold 1,"['MDGA1', 'MZB1', 'PON3', 'S100A16']",4
+Fold 2,"['MDGA1', 'SIGLEC9']",2
+Fold 3,"['CPA2', 'CTSH', 'IGF2R', 'MDGA1', 'XPNPEP2']",5
+Fold 4,"['CCL20', 'CRTAC1', 'MDGA1', 'MZB1', 'TFPI2']",5
+Fold 5,"['CTSF', 'MDGA1', 'MZB1']",3
+Fold 6,"['CCL20', 'CHIT1', 'MUC13']",3
+Fold 7,"['CCL20', 'CRTAC1', 'MDGA1', 'MZB1', 'TMPRSS5']",5
+Fold 8,"['CTSH', 'MDGA1']",2
+Fold 9,"['CCL20', 'LILRB1', 'MDGA1', 'PON3', 'S100A16']",5
+Fold 10,"['GNLY', 'MDGA1']",2
+Fold 11,"['CCL20', 'CRTAC1', 'MZB1', 'XPNPEP2']",4
+Fold 12,['PON3'],1
+Fold 13,"['CCL20', 'CRTAC1', 'HLA-DRA', 'MDGA1', 'MZB1']",5
+Fold 14,"['CCL20', 'MDGA1', 'NINJ1']",3
+Fold 15,"['CRTAC1', 'IGF2R', 'PON3']",3
+Fold 16,"['CCL20', 'MDGA1', 'MZB1']",3
+Fold 17,"['CCL20', 'CPA2', 'MDGA1', 'MZB1']",4
+Fold 18,"['CRTAC1', 'CTSH', 'MDGA1', 'MZB1']",4
+Fold 19,"['CCL20', 'CRTAC1', 'MDGA1', 'MZB1', 'S100A16']",5
+Fold 20,"['CCL20', 'CRTAC1', 'MET', 'MZB1']",4
+Fold 21,"['CCL20', 'MDGA1']",2
+Fold 22,"['CCL20', 'JUN', 'MZB1', 'TNFRSF8']",4
+Fold 23,"['MDGA1', 'MZB1', 'PON3']",3
+Fold 24,"['CPA2', 'CTSH', 'MDGA1', 'TNC']",4
+Fold 25,"['CRTAC1', 'MDGA1', 'MZB1', 'XPNPEP2']",4
+Fold 26,"['CCL20', 'MDGA1', 'S100A16']",3
+Fold 27,"['CCL20', 'MDGA1', 'MZB1', 'TNFRSF8']",4
+Fold 28,['CRTAC1'],1
+Fold 29,"['CCL20', 'MZB1']",2
+Fold 30,"['MDGA1', 'MUC13', 'PON3']",3
+Fold 31,"['CTSH', 'FOSB', 'MDGA1', 'MZB1']",4
+Fold 32,"['AOC1', 'CCL20', 'CRTAC1']",3
+Fold 33,"['FOSB', 'MDGA1', 'MZB1']",3
+Fold 34,"['CCL20', 'CRTAC1', 'MZB1']",3
+Fold 35,"['CCL20', 'MDGA1']",2
+Fold 36,"['CCL20', 'CPA2', 'CRTAC1', 'CTSH', 'MZB1']",5
+Fold 37,"['BAIAP2', 'CNTN5', 'CXCL8', 'DSG4', 'LGALS1']",5
+Fold 38,"['FOSB', 'MDGA1', 'MZB1', 'TNFRSF8']",4
+Fold 39,"['CCL20', 'GNLY', 'MZB1', 'NDRG1', 'TMPRSS5', 'XPNPEP2']",6
+Fold 40,"['CCL20', 'MDGA1', 'MZB1']",3
+Fold 41,"['CCL20', 'CPA2', 'MDGA1']",3
+Fold 42,"['CCL20', 'CRTAC1', 'MDGA1', 'MZB1', 'S100A16']",5
+Fold 43,"['CES2', 'MDGA1']",2
+Fold 44,"['CCL20', 'S100A16', 'TMPRSS5']",3
+Fold 45,"['CCL20', 'CRTAC1', 'MZB1', 'PON3']",4
+Fold 46,"['AOC1', 'S100A16']",2
+Fold 47,"['CCL20', 'CRTAC1', 'MZB1', 'XPNPEP2']",4
+Fold 48,"['CTSH', 'DSG4', 'MDGA1', 'SIGLEC9']",4
+Fold 49,"['FOSB', 'MDGA1']",2
+Fold 50,"['CCL20', 'FOSB', 'MDGA1', 'MZB1', 'PON3', 'TMPRSS5']",6
+Fold 51,"['BAIAP2', 'MDGA1']",2
+Fold 52,"['CCL15', 'CCL20', 'CRTAC1', 'CTSH', 'MZB1', 'NINJ1']",6
+Fold 53,"['PON3', 'S100A16']",2
+Fold 54,"['CCL20', 'CRTAC1', 'FOSB']",3
+Fold 55,"['CCL20', 'CRTAC1', 'IGF2R', 'MDGA1']",4
+Fold 56,"['AOC1', 'CCL20', 'MDGA1']",3
+Fold 57,"['CPA2', 'CTSH', 'GPA33', 'TNFRSF8']",4
+Fold 58,"['CCL20', 'CRTAC1', 'HLA-DRA', 'MDGA1', 'MZB1']",5
+Fold 59,"['MZB1', 'PON3', 'S100A16']",3
+Fold 60,['MDGA1'],1
+Fold 61,"['CRTAC1', 'MDGA1', 'MZB1']",3
+Fold 62,"['CCL20', 'CPA2', 'CRTAC1', 'MZB1', 'NDRG1']",5
+Fold 63,"['CCL20', 'CXCL8']",2
+Fold 64,"['BAIAP2', 'CCL15', 'CCL20', 'IL5RA', 'MDGA1', 'MZB1']",6
+Fold 65,"['CTSH', 'FBP1', 'FOSB', 'MDGA1', 'MSLN']",5
+Fold 66,"['BAIAP2', 'CCL20', 'MDGA1', 'MZB1', 'XPNPEP2']",5
+Fold 67,"['CCL20', 'CRTAC1', 'MDGA1', 'MZB1']",4
+Fold 68,"['CNTN5', 'CXCL8', 'MZB1']",3
+Fold 69,"['CCL20', 'CRTAC1', 'MZB1', 'PDGFC']",4
+Fold 70,"['DSG4', 'MDGA1', 'MZB1', 'S100A16']",4
+Fold 71,"['AOC1', 'CCL20', 'MDGA1', 'MZB1', 'NINJ1']",5
+Fold 72,"['CCL20', 'CRTAC1', 'MDGA1', 'TNFRSF8']",4
+Fold 73,"['CCL20', 'CRTAC1', 'MUC13', 'MZB1', 'NDRG1']",5
+Fold 74,"['CRTAC1', 'HLA-DRA', 'MDGA1', 'PON3']",4
+Fold 75,"['CCL20', 'CRTAC1', 'IGF2R', 'PON3']",4
+Fold 76,"['CCL20', 'MDGA1', 'MUC13']",3
+Fold 77,"['CCL20', 'CRTAC1', 'MZB1', 'NOMO1', 'TFPI2']",5
+Fold 78,"['CTSH', 'MDGA1']",2
+Fold 79,"['MDGA1', 'MZB1', 'PON3']",3
+Fold 80,"['CCL20', 'CES2', 'MDGA1', 'MZB1']",4
+Fold 81,"['CCL15', 'CTSH', 'MDGA1', 'MZB1']",4
+Fold 82,"['CCL20', 'CPA2', 'CRTAC1', 'MDGA1']",4
+Fold 83,"['MDGA1', 'PON3']",2
+Fold 84,"['CCL20', 'CRTAC1', 'HLA-DRA', 'MDGA1']",4
+Fold 85,"['MDGA1', 'MZB1']",2
+Fold 86,"['CCL20', 'MZB1', 'NDRG1']",3
+Fold 87,"['CPA2', 'JUN', 'MZB1', 'PON3']",4
+Fold 88,"['CCL20', 'CRTAC1', 'MDGA1']",3
+Fold 89,"['CCL15', 'CRTAC1', 'MDGA1']",3
+Fold 90,"['CCL20', 'MDGA1']",2
+Fold 91,"['CCL20', 'MZB1', 'PON3']",3
+Fold 92,"['CCL15', 'MDGA1']",2
+Fold 93,['MZB1'],1
+Fold 94,"['CCL20', 'CDHR1', 'CRTAC1', 'MZB1']",4
+Fold 95,"['CCL20', 'CRTAC1', 'MDGA1', 'MZB1', 'XPNPEP2']",5
+Fold 96,"['CCL20', 'CRTAC1', 'FOSB', 'MDGA1', 'MZB1', 'PDGFC']",6
+Fold 97,"['CPA2', 'CRTAC1']",2
+Fold 98,"['CCL20', 'S100A16']",2
+Fold 99,"['MDGA1', 'MZB1']",2

@@ -1,0 +1,250 @@
+---
+title: An R Markdown document converted from "/Users/jgillard/Desktop/Bioinformatics/STABL/Stabl/Notebook
+  examples/Onset of Labor Benchmarks.ipynb"
+output: html_document
+---
+
+```{python}
+import warnings
+warnings.filterwarnings('ignore')
+```
+
+# Libraries
+
+```{python}
+import numpy as np
+import pandas as pd
+from pathlib import Path
+
+from sklearn.model_selection import GroupShuffleSplit
+from sklearn.base import clone
+from sklearn.linear_model import Lasso
+
+from stabl.stabl import Stabl, plot_stabl_path, plot_fdr_graph, save_stabl_results
+from stabl.preprocessing import LowInfoFilter, remove_low_info_samples
+
+#%config InlineBackend.figure_formats=['retina']
+```
+
+```{python}
+from stabl.multi_omic_pipelines import multi_omic_stabl, multi_omic_stabl_cv, late_fusion_lasso_cv
+from stabl.single_omic_pipelines import single_omic_stabl, single_omic_stabl_cv
+from stabl.pipelines_utils import compute_features_table
+```
+
+# Data
+
+## Training Data
+
+```{python}
+y_train = pd.read_csv("../Sample Data/Onset of Labor/Training/DOS.csv", index_col=0).DOS
+patients_id = pd.read_csv("../Sample Data/Onset of Labor/Training/ID.csv",index_col=0).Id
+
+meta_train = pd.read_csv("../Sample Data/Onset of Labor/Training/Metabolomics.csv", index_col=0)
+cyto_train = pd.read_csv("../Sample Data/Onset of Labor/Training/CyTOF.csv", index_col=0)
+prot_train = pd.read_csv("../Sample Data/Onset of Labor/Training/Proteomics.csv", index_col=0)
+```
+
+## Validation Data
+
+```{python}
+y_test = pd.read_csv("../Sample Data/Onset of Labor/Validation/DOS_validation.csv",index_col=0).DOS
+cyto_test = pd.read_csv("../Sample Data/Onset of Labor/Validation/CyTOF_validation.csv", index_col=0)
+prot_test = pd.read_csv("../Sample Data/Onset of Labor/Validation/Proteomics_validation.csv", index_col=0)
+```
+
+## Data dictionaries
+
+We will define here different dictionaries depending on if we use validation or not
+
+```{python}
+train_data_dict = {
+    "CyTOF": cyto_train,
+    "Proteomics": prot_train,
+    "Metabolomics": meta_train
+}
+
+train_data_dict_red = {
+    "CyTOF": cyto_train,
+    "Proteomics": prot_train
+}
+
+test_data_dict = {
+    "CyTOF": cyto_test,
+    "Proteomics": prot_test
+}
+```
+
+# Results folder
+
+```{python}
+result_folder = "./Results Onset of Labor"
+```
+
+# Multi-omic Training-CV
+
+```{python}
+lasso = Lasso(max_iter=int(1e6))  # Redefining the base model as we are in the regressio case
+
+stabl = Stabl(
+    base_estimator=clone(lasso),
+    lambda_name='alpha',
+    lambda_grid=np.logspace(0, 2, 10),
+    n_bootstraps=300,
+    artificial_proportion=1.,
+    artificial_type="random_permutation",
+    replace=False,
+    fdr_threshold_range=np.arange(0.1, 1, 0.01),
+    sample_fraction=.5,
+    random_state=42
+)
+
+outer_splitter = GroupShuffleSplit(n_splits=100, test_size=.2, random_state=42)
+
+stability_selection = clone(stabl).set_params(artificial_type=None, hard_threshold=.3)
+```
+
+```{python}
+predictions_dict = multi_omic_stabl_cv(
+    data_dict=train_data_dict,
+    y=y_train,
+    outer_splitter=outer_splitter,
+    stabl=stabl,
+    stability_selection=stability_selection,
+    task_type="regression",
+    save_path=Path(result_folder, "Cytof_Prot_Meta"),
+    outer_groups=patients_id
+)
+```
+
+# Multi-omic Training (Cytof+Prot+Meta)
+
+```{python}
+stabl_multi = Stabl(
+    base_estimator=lasso,
+    lambda_name='alpha',
+    lambda_grid=np.logspace(0, 2, 30),
+    n_bootstraps=1000,
+    artificial_proportion=1.,
+    artificial_type="random_permutation",
+    replace=False,
+    fdr_threshold_range=np.arange(0.2, 1, 0.01),
+    sample_fraction=.5,
+    random_state=42
+)
+
+stability_selection = clone(stabl_multi).set_params(artificial_type=None, hard_threshold=.1)
+```
+
+```{python}
+predictions_dict = multi_omic_stabl(
+    data_dict=train_data_dict,
+    y=y_train,
+    stabl=stabl_multi,
+    stability_selection=stability_selection,
+    task_type="regression",
+    save_path=Path(result_folder, "Cytof_Prot_Meta"),
+)
+```
+
+# Multi-omic Training-Validation (Cytof+Prot)
+
+```{python}
+stabl_multi = Stabl(
+    base_estimator=lasso,
+    lambda_name='alpha',
+    lambda_grid=np.logspace(0, 2, 30),
+    n_bootstraps=1000,
+    artificial_proportion=1.,
+    artificial_type="random_permutation",
+    replace=False,
+    fdr_threshold_range=np.arange(0.2, 1, 0.01),
+    sample_fraction=.5,
+    random_state=42
+)
+
+stability_selection = clone(stabl_multi).set_params(artificial_type=None, hard_threshold=.1)
+```
+
+```{python}
+predictions_dict = multi_omic_stabl(
+    data_dict=train_data_dict_red,
+    y=y_train,
+    stabl=stabl_multi,
+    stability_selection=stability_selection,
+    task_type="regression",
+    save_path=Path(result_folder, "Cytof_Prot"),
+    X_test=pd.concat(test_data_dict.values(),axis=1),
+    y_test=y_test
+)
+```
+
+# Late fusion Lasso
+
+```{python}
+late_fusion_lasso_cv(
+    train_data_dict=train_data_dict,
+    y=y_train,
+    outer_splitter=outer_splitter,
+    task_type="regression",
+    save_path=Path(result_folder, "Cytof_Prot_Meta"),
+    groups=patients_id
+)
+```
+
+# Table of features
+
+## Table of features for Cytof+Prot+Meta case
+
+```{python}
+selected_features_dict = dict()
+for model in ["STABL", "EF Lasso", "SS 03", "SS 05", "SS 08"]:
+    path = Path(result_folder, "Cytof_Prot_Meta", "Training-Validation", f"{model} coefficients.csv")
+    try:
+        selected_features_dict[model] = list(pd.read_csv(path, index_col=0).iloc[:, 0].index)
+    except:
+        selected_features_dict[model] = []
+```
+
+```{python}
+features_table = compute_features_table(
+    selected_features_dict,
+    X_train=pd.concat(train_data_dict.values(), axis=1),
+    y_train=y_train,
+    #X_test=pd.concat(test_data_dict.values(), axis=1),
+    #y_test=y_test,
+    task_type="regression"
+)
+```
+
+```{python}
+features_table.to_csv(Path(result_folder, "Cytof_Prot_Meta", "Training-Validation", "Table of features.csv"))
+```
+
+## Table of features for Cytof+Prot case (with validation)
+
+```{python}
+selected_features_dict = dict()
+for model in ["STABL", "EF Lasso", "SS 03", "SS 05", "SS 08"]:
+    path = Path(result_folder, "Cytof_Prot", "Training-Validation", f"{model} coefficients.csv")
+    try:
+        selected_features_dict[model] = list(pd.read_csv(path, index_col=0).iloc[:, 0].index)
+    except:
+        selected_features_dict[model] = []
+```
+
+```{python}
+features_table = compute_features_table(
+    selected_features_dict,
+    X_train=pd.concat(train_data_dict.values(), axis=1),
+    y_train=y_train,
+    X_test=pd.concat(test_data_dict.values(), axis=1),
+    y_test=y_test,
+    task_type="regression"
+)
+```
+
+```{python}
+features_table.to_csv(Path(result_folder,"Cytof_Prot", "Training-Validation", "Table of features.csv"))
+```
+
