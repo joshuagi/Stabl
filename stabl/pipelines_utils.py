@@ -89,6 +89,7 @@ def save_plots(predictions_dict, y, task_type, save_path):
 
 
 def compute_scores_table(
+        stabl_names, # Updated for multiple iterations of STABL
         predictions_dict,
         y,
         task_type="binary",
@@ -132,13 +133,14 @@ def compute_scores_table(
     table_of_scores = pd.DataFrame(data=None, columns=scores_columns)
 
     for model, preds in predictions_dict.items():
-        stabl_preds = predictions_dict["STABL"]
+        stabl_preds = predictions_dict[stabl_names[0]] # New pipeline
+        # Jonas : I chose by default the first STABL model of the list as reference for the permutation tests
 
         if task_type == "binary":
             model_roc = roc_auc_score(y, preds)
             model_roc_CI = compute_CI(y, preds, scoring="roc_auc")
             cell_value = f"{model_roc:.3f} [{model_roc_CI[0]:.3f}, {model_roc_CI[1]:.3f}]"
-            if model != "STABL":
+            if model != stabl_names[0]: # Updated new pipeline
                 p_value = permutation_test_between_clfs(y, preds, stabl_preds, scoring="roc_auc")[1]
                 cell_value = cell_value + f" (p={p_value})"
             table_of_scores.loc[model, "ROC AUC"] = cell_value
@@ -146,7 +148,7 @@ def compute_scores_table(
             model_ap = average_precision_score(y, preds)
             model_ap_CI = compute_CI(y, preds, scoring="average_precision")
             cell_value = f"{model_ap:.3f} [{model_ap_CI[0]:.3f}, {model_ap_CI[1]:.3f}]"
-            if model != "STABL":
+            if model != stabl_names[0]:# Updated new pipeline
                 p_value = permutation_test_between_clfs(y, preds, stabl_preds, scoring="average_precision")[1]
                 cell_value = cell_value + f" (p={p_value})"
             table_of_scores.loc[model, "Average Precision"] = cell_value
@@ -165,21 +167,22 @@ def compute_scores_table(
             table_of_scores.loc[model, "MAE"] = f"{model_mae:.3f} [{model_mae_CI[0]:.3f}, {model_mae_CI[1]:.3f}]"
 
         if selected_features_dict is not None:
-            sel_features_stabl = selected_features_dict["STABL"]["Fold nb of features"]
-            jaccard_mat_stabl = jaccard_matrix(selected_features_dict["STABL"]["Fold selected features"], remove_diag=False)
-            jaccard_val_stabl = jaccard_mat_stabl[np.triu_indices_from(jaccard_mat_stabl, k=1)]
+            for stabl in stabl_names: # New pipeline : required to loop over the several STABL models (there used to be only one)
+                sel_features_stabl = selected_features_dict[stabl]["Fold nb of features"]
+                jaccard_mat_stabl = jaccard_matrix(selected_features_dict[stabl]["Fold selected features"], remove_diag=False)
+                jaccard_val_stabl = jaccard_mat_stabl[np.triu_indices_from(jaccard_mat_stabl, k=1)]
+    
+                median_features = np.median(sel_features_stabl)
+                iqr_features = np.quantile(sel_features_stabl, [.25, .75])
+                cell_value = f"{median_features:.3f} [{iqr_features[0]:.3f}, {iqr_features[1]:.3f}]"
+                table_of_scores.loc[stabl, "N features"] = cell_value
+    
+                jaccard_median = np.median(jaccard_val_stabl)
+                jaccard_iqr = np.quantile(jaccard_val_stabl, [.25, .75])
+                cell_value = f"{jaccard_median:.3f} [{jaccard_iqr[0]:.3f}, {jaccard_iqr[1]:.3f}]"
+                table_of_scores.loc[stabl, "CVS"] = cell_value
 
-            median_features = np.median(sel_features_stabl)
-            iqr_features = np.quantile(sel_features_stabl, [.25, .75])
-            cell_value = f"{median_features:.3f} [{iqr_features[0]:.3f}, {iqr_features[1]:.3f}]"
-            table_of_scores.loc["STABL", "N features"] = cell_value
-
-            jaccard_median = np.median(jaccard_val_stabl)
-            jaccard_iqr = np.quantile(jaccard_val_stabl, [.25, .75])
-            cell_value = f"{jaccard_median:.3f} [{jaccard_iqr[0]:.3f}, {jaccard_iqr[1]:.3f}]"
-            table_of_scores.loc["STABL", "CVS"] = cell_value
-
-            if model != "STABL":
+            if not model in stabl_names: # New pipeline : used to be "if model != 'STABL':"
                 sel_features = selected_features_dict[model]["Fold nb of features"]
                 jaccard_mat = jaccard_matrix(selected_features_dict[model]["Fold selected features"], remove_diag=False)
                 jaccard_val = jaccard_mat[np.triu_indices_from(jaccard_mat, k=1)]

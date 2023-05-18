@@ -13,9 +13,11 @@ from sklearn.model_selection import RepeatedStratifiedKFold, RepeatedKFold, Leav
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import l1_min_c
 
+
 from .metrics import jaccard_matrix
 from .preprocessing import LowInfoFilter, remove_low_info_samples
 from .stabl import save_stabl_results
+from .visualization import boxplot_features
 
 from scipy import stats
 from scipy.stats import mannwhitneyu
@@ -53,7 +55,8 @@ def single_omic_stabl_cv(
         X,
         y,
         outer_splitter,
-        stabl,
+        stablList, # Updated
+        stabl_names, # Updated
         stability_selection,
         task_type,
         save_path,
@@ -75,8 +78,12 @@ def single_omic_stabl_cv(
     outer_splitter: sklearn.model_selection._split.BaseCrossValidator
         Outer cross validation splitter
 
-    stabl: SurgeLibrary.stability_selection.StabilitySelection
-        STABL used to select features at each fold of the cross validation and for each omic.
+    stablList: list of SurgeLibrary.stability_selection.StabilitySelection
+        list of the STABL used to select features at each fold of the cross validation and for each omic.
+        
+    stabl_names: list of str
+        list of the names of the STABL used to select features at each fold of the cross validation and for each omic.
+        THEY HAVE TO BE IN THE SAME ORDER AS IN THE VARIABLE stabl
 
     task_type: str
         Can either be "binary" for binary classification or "regression" for regression tasks.
@@ -91,7 +98,7 @@ def single_omic_stabl_cv(
     -------
 
     """
-    models = ["STABL", "SS 03", "SS 05", "SS 08", "Lasso", "Lasso 1SE", "ElasticNet"]
+    models = ["SS 03", "SS 05", "SS 08", "Lasso", "Lasso 1SE", "ElasticNet"] + stabl_names # New pipeline : ["STABL"] was replaced by stabl_names
 
     os.makedirs(Path(save_path, "Training CV"), exist_ok=True)
     os.makedirs(Path(save_path, "Summary"), exist_ok=True)
@@ -106,7 +113,6 @@ def single_omic_stabl_cv(
 
     i = 1
     for train, test in outer_splitter.split(X, y, groups=outer_groups):
-      
         # Jonas additional code in case outer_splitter is LeaveOneOut
         if isinstance(outer_splitter, LeaveOneOut):
             print(f" Iteration {i} over {X.shape[0]} ".center(80, '*'), "\n")
@@ -137,17 +143,16 @@ def single_omic_stabl_cv(
         if task_type == "binary":
             min_C = l1_min_c(X_tmp_std, y_tmp)
             lambda_grid = np.linspace(min_C, min_C * 100, 10)
-            stabl.set_params(lambda_grid=lambda_grid)
             stability_selection.set_params(lambda_grid=lambda_grid)
-
-        stabl.fit(X_tmp_std, y_tmp)
-        tmp_sel_features = list(stabl.get_feature_names_out())
-        fold_selected_features["STABL"] = tmp_sel_features
-
-        print(
-            f"STABL finished ({X_tmp.shape[0]} samples);"
-            f" {len(tmp_sel_features)} features selected\n"
-        )
+            for id, stabl_model in enumerate(stablList): # New pipeline : a loop is required to go through the different STABL models
+                stabl_model.set_params(lambda_grid=lambda_grid)
+                stabl_model.fit(X_tmp_std, y_tmp)
+                tmp_sel_features = list(stabl_model.get_feature_names_out())
+                fold_selected_features[stabl_names[id]] = tmp_sel_features
+                print(
+                    f"{stabl_names[id]} finished ({X_tmp.shape[0]} samples);"
+                    f" {len(tmp_sel_features)} features selected\n"
+                )
 
         # __SS__
         stability_selection.fit(X_tmp_std, y_tmp)
@@ -155,19 +160,21 @@ def single_omic_stabl_cv(
         fold_selected_features["SS 05"] = list(stability_selection.get_feature_names_out(new_hard_threshold=.5))
         fold_selected_features["SS 08"] = list(stability_selection.get_feature_names_out(new_hard_threshold=.8))
 
-        selected_features_dict["STABL"].append(fold_selected_features["STABL"])
+        for id, stabl_model in enumerate(stablList): # New pipeline : a loop is required to go through the different STABL models
+            selected_features_dict[stabl_names[id]].append(fold_selected_features[stabl_names[id]])
         selected_features_dict[f"SS 03"].append(fold_selected_features["SS 03"])
         selected_features_dict[f"SS 05"].append(fold_selected_features["SS 05"])
         selected_features_dict[f"SS 08"].append(fold_selected_features["SS 08"])
 
         print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-        print(f"This fold: {len(fold_selected_features['STABL'])} features selected for STABL")
+        for id, stabl_model in enumerate(stablList): # New pipeline : a loop is required to go through the different STABL models
+            print(f"This fold: {len(fold_selected_features[stabl_names[id]])} features selected for {stabl_names[id]}")
         print(f"This fold: {len(fold_selected_features['SS 03'])} features selected for SS 03")
         print(f"This fold: {len(fold_selected_features['SS 05'])} features selected for SS 05")
         print(f"This fold: {len(fold_selected_features['SS 08'])} features selected for SS 08")
         print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n")
 
-        for model in ["STABL", "SS 03", "SS 05", "SS 08"]:
+        for model in stabl_names + ["SS 03", "SS 05", "SS 08"]: # New pipeline : ["STABL"] was replaced by stabl_names
 
             X_train = X.loc[train_idx, fold_selected_features[model]]
             X_test = X.loc[test_idx, fold_selected_features[model]]
@@ -306,7 +313,8 @@ def single_omic_stabl_cv(
 
     predictions_dict = {model: predictions_dict[model].median(axis=1) for model in predictions_dict.keys()}
 
-    table_of_scores = compute_scores_table(
+    table_of_scores = compute_scores_table( # New pipeline : calling new_compute_scores_table instead of compute_scores_table
+        stabl_names,
         predictions_dict=predictions_dict,
         y=y,
         task_type=task_type,
@@ -322,6 +330,59 @@ def single_omic_stabl_cv(
         task_type=task_type,
         save_path=cv_res_path
     )
+    
+    # New pipeline : Univariate Analysis
+    # Check the lowest p.values with the response and report the top 10.
+    ################################################################################################
+    if task_type == 'binary':
+        resultFolderUnivariate = Path(save_path,"Univariate")
+        os.makedirs(resultFolderUnivariate, exist_ok=True)
+        
+        vals1 = []
+        vals2 = []
+        for col in X.columns:
+            a,b = mannwhitneyu(X.loc[y == 0,col].to_numpy(),X.loc[y == 1,col].to_numpy())
+            vals1.append(a)
+            vals2.append(b)
+            
+        res = pd.DataFrame(data=[vals1,vals2],index= ["Mann-Whitney U-test","p-value"],columns=X.columns)
+        res = res.sort_values(by="p-value",axis=1)
+        res.T.to_csv(Path(resultFolderUnivariate, "Mann-WhitneyU-testPval.csv"))
+            
+
+        boxplot_features(
+            list_of_features=res.columns[:10],
+            df_X=X[res.columns[:10]],
+            y=y,
+            show_fig=False,
+            export_file=True,
+            path = Path(resultFolderUnivariate)
+            )
+    
+        # New pipeline : Final STABLs
+        ################################################################################################
+        preprocessing2 = Pipeline(
+        steps=[
+            ("lif", LowInfoFilter(0.2)),
+            ("variance", VarianceThreshold(0.0)), # Variance threshold set to 0
+            ("impute", SimpleImputer(strategy="median")),
+            ("std", StandardScaler())
+        ]
+        )
+
+        dataSTD = pd.DataFrame(
+            data=preprocessing2.fit_transform(X),
+            index=X.index,
+            columns=preprocessing2.get_feature_names_out()
+        )
+        
+        for id, stabl_model in enumerate(stablList):
+            stabl = clone(stabl_model)
+            stabl.fit(dataSTD,y.astype(int))
+
+            resultFolder = Path(save_path,"FinalSTABLs")
+            save_stabl_results(stabl_model,Path(resultFolder,stabl_names[id]),dataSTD,y,task_type="binary")
+        ################################################################################################
 
     return predictions_dict
 
