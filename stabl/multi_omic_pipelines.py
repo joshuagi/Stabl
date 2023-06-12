@@ -769,12 +769,15 @@ def multi_omic_stabl_cv_josh(
                     predictions = model_lasso.fit(X_train, y_train).predict_proba(X_test)[:, 1].flatten()
                     # Collect features. Create new key in dataframe if it doesnt already exist
                     features_binary_lasso = list(X_train.columns[np.where(model_lasso.coef_.flatten())])
-                    # model.coef_.flatten() # coefs, in case I need them.
+                    coefs_binary_lasso = list(model_lasso.coef_.flatten()) # coefs for each variable
                     if "Stabl_binary_lasso" not in selected_features_dict and model == "STABL": # create new dictionary for lasso features, but only for Stabl model
                       selected_features_dict["Stabl_binary_lasso"] = [] # Create new key
                       selected_features_dict["Stabl_binary_lasso"].append(features_binary_lasso)
+                      selected_features_dict["Stabl_binary_lasso_coefs"] = []
+                      selected_features_dict["Stabl_binary_lasso_coefs"].append(coefs_binary_lasso)
                     elif "Stabl_binary_lasso" in selected_features_dict and model == "STABL":
                       selected_features_dict["Stabl_binary_lasso"].append(features_binary_lasso)
+                      selected_features_dict["Stabl_binary_lasso_coefs"].append(coefs_binary_lasso)
                     else:
                       pass
                     ##################################################################
@@ -803,8 +806,11 @@ def multi_omic_stabl_cv_josh(
                     if "Stabl_binary_lasso" not in selected_features_dict and model == "STABL":
                       selected_features_dict["Stabl_binary_lasso"] = [] # Create new key
                       selected_features_dict["Stabl_binary_lasso"].append([])
+                      selected_features_dict["Stabl_binary_lasso_coefs"] = []
+                      selected_features_dict["Stabl_binary_lasso_coefs"].append([])
                     elif "Stabl_binary_lasso" in selected_features_dict and model == "STABL":
                       selected_features_dict["Stabl_binary_lasso"].append([])
+                      selected_features_dict["Stabl_binary_lasso_coefs"].append([])
                     else:
                       pass
                     ##################################################################
@@ -899,8 +905,22 @@ def multi_omic_stabl_cv_josh(
         #End up update
 
         formatted_features_dict[model].to_csv(Path(cv_res_path, f"Selected Features {model}.csv"))
-        # Add code here that parses the final STABL lasso outputs, providing selected features and coefficients
+        
     
+    
+    #! Write a file containing the model coefficients if it exists
+    if "Stabl_binary_lasso_coefs" in selected_features_dict:
+      formatted_coef_dict = pd.DataFrame(
+                        data={
+                            "Fold feature coefficients": selected_features_dict["Stabl_binary_lasso_coefs"]
+                        },
+                        index=[f"Fold {i}" for i in range(X_tot.shape[0])]
+                    )
+      formatted_coef_dict.to_csv(Path(cv_res_path, "Stabl feature coefficients.csv"))
+    else:
+      pass
+    
+    # Analyze predictions
     predictions_dict = {model: predictions_dict[model].median(axis=1) for model in predictions_dict.keys()} # Generates predictions dictionary.
     # This is specifically designed for GroupShuffleSplit, such that it takes the median prediction across CV folds
     # If the CV scheme is LOO, you only get one prediction per fold. Then this essentially collapses the predictions into one column
